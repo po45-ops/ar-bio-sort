@@ -67,6 +67,33 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             z-index: 100; /* Ensure dragged item is on top */
         }
+
+        .draggable-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            background: #e2e8f0;
+        }
+
+        .draggable-item.image-error::before {
+            content: attr(data-fallback);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .start-preview {
+            width: 66px;
+            height: 66px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 5px 14px rgba(15, 23, 42, 0.2);
+        }
         
         .draggable-item .label {
             position: absolute;
@@ -223,37 +250,49 @@
         /* Hand Cursor for AR */
         #hand-cursor {
             position: fixed;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            border: 4px solid #3b82f6;
-            background: rgba(59, 130, 246, 0.3);
+            border: 4px solid currentColor;
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.18);
             pointer-events: none; /* Let elements behind it be clickable/hoverable */
             z-index: 9999;
             transform: translate(-50%, -50%);
             display: none;
-            transition: transform 0.1s, border-color 0.2s, background 0.2s;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            transition: transform 0.1s, color 0.2s, background 0.2s;
+            box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.14), 0 0 18px rgba(34, 197, 94, 0.65);
         }
 
-        #hand-cursor::after {
-            content: "🖐️";
+        #hand-cursor::before {
+            content: "";
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 24px;
+            width: 13px;
+            height: 13px;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+        }
+
+        #hand-cursor::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: currentColor;
         }
 
         #hand-cursor.grabbing {
-            transform: translate(-50%, -50%) scale(0.8);
-            border-color: #ef4444;
-            background: rgba(239, 68, 68, 0.5);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
-        }
-        
-        #hand-cursor.grabbing::after {
-            content: "🤏";
+            transform: translate(-50%, -50%) scale(0.72);
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.32);
+            box-shadow: 0 0 0 9px rgba(239, 68, 68, 0.16), 0 0 24px rgba(239, 68, 68, 0.9);
         }
         
         #ar-loading {
@@ -297,7 +336,7 @@
         <div class="flex gap-4 items-center">
             <!-- AR Toggle Button -->
             <button id="ar-toggle-btn" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-full font-bold border-2 border-purple-300 transition-colors flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-camera"></i> <span class="hidden md:inline">เปิด AR (จีบนิ้วจับ)</span>
+                <i class="fa-solid fa-camera"></i> <span class="hidden md:inline">เปิด AR (กำมือจับ)</span>
             </button>
             
             <div class="bg-blue-100 px-4 py-2 rounded-full font-bold text-blue-800 flex items-center gap-2 border-2 border-blue-300">
@@ -317,7 +356,7 @@
         <div class="text-center bg-white p-3 rounded-xl shadow-sm border border-gray-200">
             <p class="text-lg font-semibold text-gray-700">
                 ลากรูปภาพไปใส่ในกล่องให้ถูกต้อง!
-                <span class="block text-sm text-purple-700 mt-1">โหมด AR: จีบนิ้วโป้งกับนิ้วชี้เพื่อจับและลาก</span>
+                <span class="block text-sm text-purple-700 mt-1">โหมด AR: วางวงควบคุมบนรูป แล้วกำมือเพื่อจับและลาก</span>
             </p>
         </div>
 
@@ -351,15 +390,32 @@
     </main>
 
     <!-- Start Screen Modal -->
-    <div id="start-screen" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-[90%] text-center border-4 border-green-400 transform transition-transform scale-100">
+    <div id="start-screen" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-center justify-center overflow-y-auto p-4">
+        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-md w-full my-auto text-center border-4 border-green-400 transform transition-transform scale-100">
             <h2 class="text-4xl font-bold text-green-600 mb-4">พืช หรือ สัตว์?</h2>
-            <div class="flex justify-center gap-4 text-5xl mb-6">
-                <span class="floating">🌳</span>
-                <span class="floating" style="animation-delay: 1s;">🐘</span>
-                <span class="floating" style="animation-delay: 2s;">🌻</span>
+            <div class="flex justify-center gap-4 mb-5">
+                <img class="start-preview floating" src="assets/tree.jpg" alt="ต้นไม้">
+                <img class="start-preview floating" style="animation-delay: 1s;" src="assets/elephant.jpg" alt="ช้าง">
+                <img class="start-preview floating" style="animation-delay: 2s;" src="assets/sunflower.jpg" alt="ดอกทานตะวัน">
             </div>
-            <p class="text-gray-600 mb-6 text-lg">ทดสอบความรู้ทางวิทยาศาสตร์ของคุณ<br>แยกแยะสิ่งมีชีวิตให้ถูกต้องภายในเวลาที่กำหนด</p>
+            <p class="text-gray-600 mb-4 text-lg">ทดสอบความรู้ทางวิทยาศาสตร์ของคุณ<br>แยกแยะสิ่งมีชีวิตให้ถูกต้องภายในเวลาที่กำหนด</p>
+
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-5 text-left">
+                <label for="duration-input" class="block font-bold text-blue-800 mb-2">
+                    <i class="fa-solid fa-user-gear mr-2"></i>คุณครูกำหนดเวลาเล่น
+                </label>
+                <div class="flex items-center gap-2 mb-3">
+                    <input id="duration-input" type="number" min="10" max="600" step="5" value="60" inputmode="numeric" class="w-full rounded-xl border-2 border-blue-300 bg-white px-4 py-2 text-center text-xl font-bold text-blue-800 focus:border-blue-500 focus:outline-none">
+                    <span class="font-bold text-blue-700 whitespace-nowrap">วินาที</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2" aria-label="ตัวเลือกเวลาด่วน">
+                    <button type="button" data-duration="30" class="duration-preset rounded-lg bg-white border border-blue-300 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">30 วิ</button>
+                    <button type="button" data-duration="60" class="duration-preset rounded-lg bg-blue-600 border border-blue-600 py-2 text-sm font-bold text-white">60 วิ</button>
+                    <button type="button" data-duration="90" class="duration-preset rounded-lg bg-white border border-blue-300 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">90 วิ</button>
+                    <button type="button" data-duration="120" class="duration-preset rounded-lg bg-white border border-blue-300 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">2 นาที</button>
+                </div>
+                <p class="text-xs text-blue-600 mt-2 text-center">กำหนดได้ตั้งแต่ 10–600 วินาที</p>
+            </div>
             <button id="start-btn" class="bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg hover:scale-105 transition-transform w-full active:scale-95">
                 เริ่มเกมเลย!
             </button>
@@ -380,9 +436,14 @@
                 </div>
             </div>
             
-            <button id="restart-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg hover:scale-105 transition-transform w-full active:scale-95">
-                <i class="fa-solid fa-rotate-right mr-2"></i> เล่นอีกครั้ง
-            </button>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button id="restart-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-5 rounded-full text-lg shadow-lg hover:scale-105 transition-transform w-full active:scale-95">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> เล่นอีกครั้ง
+                </button>
+                <button id="settings-btn" class="bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 font-bold py-3 px-5 rounded-full text-lg shadow-md hover:scale-105 transition-transform w-full active:scale-95">
+                    <i class="fa-solid fa-clock mr-2"></i> เปลี่ยนเวลา
+                </button>
+            </div>
         </div>
     </div>
 
@@ -390,33 +451,34 @@
         // Game Data: List of living things
         const livingThings = [
             // Plants (พืช)
-            { id: 'p1', name: 'ต้นไม้', emoji: '🌳', category: 'plant' },
-            { id: 'p2', name: 'ดอกทานตะวัน', emoji: '🌻', category: 'plant' },
-            { id: 'p3', name: 'กระบองเพชร', emoji: '🌵', category: 'plant' },
-            { id: 'p4', name: 'หญ้า', emoji: '🌿', category: 'plant' },
-            { id: 'p5', name: 'ดอกกุหลาบ', emoji: '🌹', category: 'plant' },
-            { id: 'p6', name: 'แครอท', emoji: '🥕', category: 'plant' },
-            { id: 'p7', name: 'ดอกชบา', emoji: '🌺', category: 'plant' },
-            { id: 'p8', name: 'แอปเปิ้ล', emoji: '🍎', category: 'plant' },
-            { id: 'p9', name: 'ข้าวโพด', emoji: '🌽', category: 'plant' },
-            { id: 'p10', name: 'ต้นสน', emoji: '🌲', category: 'plant' },
+            { id: 'p1', name: 'ต้นไม้', image: 'assets/tree.jpg', category: 'plant' },
+            { id: 'p2', name: 'ดอกทานตะวัน', image: 'assets/sunflower.jpg', category: 'plant' },
+            { id: 'p3', name: 'กระบองเพชร', image: 'assets/cactus.jpg', category: 'plant' },
+            { id: 'p4', name: 'หญ้า', image: 'assets/grass.jpg', category: 'plant' },
+            { id: 'p5', name: 'ดอกกุหลาบ', image: 'assets/rose.jpg', category: 'plant' },
+            { id: 'p6', name: 'แครอท', image: 'assets/carrot.jpg', category: 'plant' },
+            { id: 'p7', name: 'ดอกชบา', image: 'assets/hibiscus.jpg', category: 'plant' },
+            { id: 'p8', name: 'แอปเปิ้ล', image: 'assets/apple.jpg', category: 'plant' },
+            { id: 'p9', name: 'ข้าวโพด', image: 'assets/corn.jpg', category: 'plant' },
+            { id: 'p10', name: 'ต้นสน', image: 'assets/pine.jpg', category: 'plant' },
             
             // Animals (สัตว์)
-            { id: 'a1', name: 'สุนัข', emoji: '🐶', category: 'animal' },
-            { id: 'a2', name: 'แมว', emoji: '🐱', category: 'animal' },
-            { id: 'a3', name: 'ช้าง', emoji: '🐘', category: 'animal' },
-            { id: 'a4', name: 'นก', emoji: '🐦', category: 'animal' },
-            { id: 'a5', name: 'ปลา', emoji: '🐟', category: 'animal' },
-            { id: 'a6', name: 'ผีเสื้อ', emoji: '🦋', category: 'animal' },
-            { id: 'a7', name: 'เต่า', emoji: '🐢', category: 'animal' },
-            { id: 'a8', name: 'สิงโต', emoji: '🦁', category: 'animal' },
-            { id: 'a9', name: 'กบ', emoji: '🐸', category: 'animal' },
-            { id: 'a10', name: 'ม้า', emoji: '🐴', category: 'animal' }
+            { id: 'a1', name: 'สุนัข', image: 'assets/dog.jpg', category: 'animal' },
+            { id: 'a2', name: 'แมว', image: 'assets/cat.jpg', category: 'animal' },
+            { id: 'a3', name: 'ช้าง', image: 'assets/elephant.jpg', category: 'animal' },
+            { id: 'a4', name: 'นก', image: 'assets/bird.jpg', category: 'animal' },
+            { id: 'a5', name: 'ปลา', image: 'assets/fish.jpg', category: 'animal' },
+            { id: 'a6', name: 'ผีเสื้อ', image: 'assets/butterfly.jpg', category: 'animal' },
+            { id: 'a7', name: 'เต่า', image: 'assets/turtle.jpg', category: 'animal' },
+            { id: 'a8', name: 'สิงโต', image: 'assets/lion.jpg', category: 'animal' },
+            { id: 'a9', name: 'กบ', image: 'assets/frog.jpg', category: 'animal' },
+            { id: 'a10', name: 'ม้า', image: 'assets/horse.jpg', category: 'animal' }
         ];
 
         // State variables
         let score = 0;
-        let timeLeft = 60;
+        let gameDuration = 60;
+        let timeLeft = gameDuration;
         let timerInterval;
         let currentItems = [];
         const itemsPerRound = 5; // How many items show up at once in the pool
@@ -434,6 +496,8 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScore = document.getElementById('final-score');
         const finalMessage = document.getElementById('final-message');
+        const durationInput = document.getElementById('duration-input');
+        const durationPresetButtons = document.querySelectorAll('.duration-preset');
         const dropZones = document.querySelectorAll('.drop-zone');
 
         // AR Variables
@@ -441,7 +505,7 @@
         let arHands = null;
         let arCamera = null;
         let arGrabbedItem = null;
-        let isHandPinching = false;
+        let isHandGrabbing = false;
         let cursorX = 0, cursorY = 0;
 
         // Shuffle array
@@ -462,10 +526,24 @@
             el.setAttribute('draggable', 'true'); // For Desktop API
             el.setAttribute('data-id', data.id);
             el.setAttribute('data-category', data.category);
-            el.innerHTML = `
-                ${data.emoji}
-                <div class="label">${data.name}</div>
-            `;
+            el.setAttribute('data-fallback', data.name.charAt(0));
+
+            const photo = document.createElement('img');
+            photo.src = data.image;
+            photo.alt = data.name;
+            photo.draggable = false;
+            photo.referrerPolicy = 'no-referrer';
+            photo.addEventListener('error', () => {
+                photo.remove();
+                el.classList.add('image-error');
+            }, { once: true });
+
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.textContent = data.name;
+
+            el.appendChild(photo);
+            el.appendChild(label);
             
             // Touch events for Mobile
             el.addEventListener('touchstart', handleTouchStart, {passive: false});
@@ -764,10 +842,33 @@
             }
         }
 
+        function getSelectedDuration() {
+            const parsedDuration = Math.round(Number(durationInput.value));
+            const safeDuration = Number.isFinite(parsedDuration)
+                ? Math.min(600, Math.max(10, parsedDuration))
+                : 60;
+            durationInput.value = safeDuration;
+            return safeDuration;
+        }
+
+        function updateDurationPresetStyles() {
+            const selectedDuration = Number(durationInput.value);
+            durationPresetButtons.forEach(button => {
+                const isSelected = Number(button.dataset.duration) === selectedDuration;
+                button.classList.toggle('bg-blue-600', isSelected);
+                button.classList.toggle('border-blue-600', isSelected);
+                button.classList.toggle('text-white', isSelected);
+                button.classList.toggle('bg-white', !isSelected);
+                button.classList.toggle('border-blue-300', !isSelected);
+                button.classList.toggle('text-blue-700', !isSelected);
+            });
+        }
+
         function startGame() {
             // Reset variables
             score = 0;
-            timeLeft = 60;
+            gameDuration = getSelectedDuration();
+            timeLeft = gameDuration;
             updateScore(0);
             timeDisplay.textContent = timeLeft;
             
@@ -796,11 +897,11 @@
             
             // Set message based on score
             if (score >= 100) {
-                finalMessage.textContent = "อัจฉริยะ! คุณคือนักชีววิทยาตัวน้อย 🥇";
+                finalMessage.textContent = "ยอดเยี่ยม! คุณคือนักชีววิทยาตัวน้อย";
             } else if (score >= 50) {
-                finalMessage.textContent = "เก่งมาก! ความรู้แน่นปึ้ก 🥈";
+                finalMessage.textContent = "เก่งมาก! จำแนกสิ่งมีชีวิตได้แม่นยำ";
             } else {
-                finalMessage.textContent = "พยายามอีกนิดนะ สนุกไปด้วยกัน! 🥉";
+                finalMessage.textContent = "ลองอีกครั้งนะ คุณจะทำได้ดีขึ้นแน่นอน";
             }
             
             gameOverScreen.classList.remove('hidden');
@@ -809,6 +910,22 @@
         // Event Listeners for buttons
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+        durationPresetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                durationInput.value = button.dataset.duration;
+                updateDurationPresetStyles();
+            });
+        });
+        durationInput.addEventListener('input', updateDurationPresetStyles);
+        durationInput.addEventListener('change', () => {
+            getSelectedDuration();
+            updateDurationPresetStyles();
+        });
 
         // --- AR Mode & Hand Tracking Logic --- //
         const arToggleBtn = document.getElementById('ar-toggle-btn');
@@ -847,7 +964,7 @@
         }
 
         function stopAR() {
-            arToggleBtn.innerHTML = '<i class="fa-solid fa-camera"></i> <span class="hidden md:inline">เปิด AR (จีบนิ้วจับ)</span>';
+            arToggleBtn.innerHTML = '<i class="fa-solid fa-camera"></i> <span class="hidden md:inline">เปิด AR (กำมือจับ)</span>';
             arToggleBtn.classList.replace('bg-red-500', 'bg-purple-100');
             arToggleBtn.classList.replace('text-white', 'text-purple-800');
             arToggleBtn.classList.replace('border-red-600', 'border-purple-300');
@@ -860,7 +977,7 @@
             if (arCamera) {
                 arCamera.stop();
             }
-            isHandPinching = false;
+            isHandGrabbing = false;
             returnARItemToPool();
         }
 
@@ -894,27 +1011,34 @@
             });
         }
 
-        function checkPinchGesture(landmarks, wasPinching) {
-            // วัดระยะปลายนิ้วโป้งกับนิ้วชี้เทียบกับความกว้างฝ่ามือ
-            // ทำให้ระยะจีบทำงานสม่ำเสมอแม้มืออยู่ใกล้หรือไกลกล้อง
-            const thumbTip = landmarks[4];
-            const indexTip = landmarks[8];
-            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-            const indexBase = landmarks[5];
-            const pinkyBase = landmarks[17];
-            const palmWidth = Math.max(
-                Math.hypot(indexBase.x - pinkyBase.x, indexBase.y - pinkyBase.y),
-                0.001
-            );
-            const pinchRatio = pinchDist / palmWidth;
+        function checkFistGesture(landmarks, wasGrabbing) {
+            // ตรวจว่านิ้วชี้ นิ้วกลาง นิ้วนาง และนิ้วก้อยงอเข้าหาฝ่ามือ
+            // เริ่มจับเมื่อกำอย่างน้อย 3 นิ้ว และคงสถานะไว้จนกว่าจะคลายเกือบหมด
+            const wrist = landmarks[0];
+            const fingers = [
+                { tip: 8, mcp: 5 },
+                { tip: 12, mcp: 9 },
+                { tip: 16, mcp: 13 },
+                { tip: 20, mcp: 17 }
+            ];
 
-            // ใช้สองเกณฑ์เพื่อไม่ให้จับ-ปล่อยสั่นไปมาเมื่อระยะนิ้วอยู่ใกล้เส้นแบ่ง
-            return pinchRatio < (wasPinching ? 0.45 : 0.32);
+            let curledFingers = 0;
+            fingers.forEach(finger => {
+                const tip = landmarks[finger.tip];
+                const mcp = landmarks[finger.mcp];
+                const tipDistance = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+                const mcpDistance = Math.hypot(mcp.x - wrist.x, mcp.y - wrist.y);
+                if (tipDistance < mcpDistance * 1.08) {
+                    curledFingers++;
+                }
+            });
+
+            return curledFingers >= (wasGrabbing ? 2 : 3);
         }
 
         function mapVideoPointToScreen(point) {
             // ชดเชยภาพกล้องที่ใช้ object-fit: cover และถูก mirror
-            // เพื่อให้พิกัดจุดจีบตรงกับภาพที่เห็นจริงบนหน้าจอทุกอัตราส่วน
+            // เพื่อให้พิกัดวงควบคุมตรงกับภาพที่เห็นจริงบนหน้าจอทุกอัตราส่วน
             const sourceWidth = videoElement.videoWidth || 640;
             const sourceHeight = videoElement.videoHeight || 480;
             const viewportWidth = window.innerWidth;
@@ -973,29 +1097,24 @@
                 // วาดเส้นโครงกระดูกมือบนหน้าจอ (สีเขียวบางๆ ให้เด็กเห็นว่ากล้องจับมือได้)
                 drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(0, 255, 0, 0.2)', lineWidth: 3});
                 
-                // ใช้กึ่งกลางระหว่างปลายนิ้วโป้งกับนิ้วชี้เป็นตำแหน่งจับจริง
-                const thumbTip = landmarks[4];
-                const indexTip = landmarks[8];
-                const pinchPoint = {
-                    x: (thumbTip.x + indexTip.x) / 2,
-                    y: (thumbTip.y + indexTip.y) / 2
-                };
-                const screenPoint = mapVideoPointToScreen(pinchPoint);
+                // ใช้กลางฝ่ามือเป็นตำแหน่งวงควบคุมสำหรับท่ากำมือ
+                const palmCenter = landmarks[9];
+                const screenPoint = mapVideoPointToScreen(palmCenter);
                 cursorX = screenPoint.x;
                 cursorY = screenPoint.y;
                 
-                // อัปเดตตำแหน่งไอคอนมือ (Cursor) บนหน้าจอ
+                // อัปเดตตำแหน่งวงควบคุมบนหน้าจอ
                 handCursor.style.left = `${cursorX}px`;
                 handCursor.style.top = `${cursorY}px`;
                 
-                const isPinchingNow = checkPinchGesture(landmarks, isHandPinching);
+                const isGrabbingNow = checkFistGesture(landmarks, isHandGrabbing);
                 
-                if (isPinchingNow) {
+                if (isGrabbingNow) {
                     handCursor.classList.add('grabbing');
                     
-                    if (!isHandPinching) {
-                        // เริ่มจีบนิ้วโป้งกับนิ้วชี้
-                        isHandPinching = true;
+                    if (!isHandGrabbing) {
+                        // เริ่มกำมือเพื่อจับ
+                        isHandGrabbing = true;
                         
                         // ตรวจสอบว่ามืออยู่ตรงกับไอเทมไหนที่ยังไม่ได้ถูกหยิบ
                         if (!arGrabbedItem) {
@@ -1012,12 +1131,12 @@
                                 arGrabbedItem.style.pointerEvents = 'none';
                                 arGrabbedItem.style.willChange = 'left, top';
                                 
-                                // ให้จุดกึ่งกลางของรูปอยู่ตรงจุดจีบพอดี
+                                // ให้จุดกึ่งกลางของรูปอยู่ตรงวงควบคุมพอดี
                                 positionARItem(arGrabbedItem, cursorX, cursorY);
                             }
                         }
                     } else if (arGrabbedItem) {
-                        // กำลังจีบลากของอยู่ ให้อัปเดตตำแหน่งตรงกับจุดจีบ
+                        // กำลังลากของด้วยท่ากำมือ
                         positionARItem(arGrabbedItem, cursorX, cursorY);
                         
                         // ไฮไลต์กล่องที่มือลากผ่าน
@@ -1031,11 +1150,11 @@
                         });
                     }
                 } else {
-                    // แยกนิ้วโป้งกับนิ้วชี้ออกเพื่อปล่อย
+                    // แบมือออกเพื่อปล่อย
                     handCursor.classList.remove('grabbing');
                     
-                    if (isHandPinching) {
-                        isHandPinching = false;
+                    if (isHandGrabbing) {
+                        isHandGrabbing = false;
                         
                         if (arGrabbedItem) {
                             let dropped = false;
@@ -1063,7 +1182,7 @@
             } else {
                 // หากกล้องตรวจไม่พบมือ ให้ปล่อยของลง
                 handCursor.classList.remove('grabbing');
-                isHandPinching = false;
+                isHandGrabbing = false;
                 returnARItemToPool();
             }
             canvasCtx.restore();
